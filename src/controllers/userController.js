@@ -2,6 +2,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const User = require('../../models/user');
 const SECRET_KEY = process.env.JWT_SECRET || 'secret';
+const path = require('path');
 
 exports.hello = (req, res) => res.send('hello');
 
@@ -23,7 +24,7 @@ exports.createUser = async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, 10);
         const newUser = await User.create({ username, email, password: hashedPassword });
         res.status(201).json({ message: 'OK' });
-    } catch (error) { res.status(500).json({ error: 'Error creating user' }); }
+    } catch (error) { res.status(500).json({ error: 'KO' }); }
 };
 
 exports.getUserProfile = async (req, res) => {
@@ -36,6 +37,21 @@ exports.getUserProfile = async (req, res) => {
         console.error('Error fetching user:', error);
         res.status(500).json({ error: 'Error fetching user' });
     }
+};
+
+exports.uploadFile = (req, res) => {
+    if (!req.files || !req.files.file) return res.status(400).send('No file uploaded');
+
+    const file = req.files.file;
+    const uploadPath = path.join(__dirname, '../../files', file.name);
+
+    file.mv(uploadPath, (err) => {
+        if (err) {
+            console.error('Error uploading file:', err);
+            return res.status(500).send('Internal Server Error');
+        }
+        res.json({ message: 'File uploaded successfully', file: file.name });
+    });
 };
 
 exports.deleteUser = async (req, res) => {
@@ -52,7 +68,26 @@ exports.blockUser = async (req, res) => {
     } catch (error) { res.status(500).json({ error: 'Error blocking user' }); }
 };
 
-exports.uploadFile = (req, res) => {
-    if (!req.files || !req.files.file) return res.status(400).send('No file uploaded');
-    res.json({ message: 'File uploaded successfully', file: req.files.file.name });
+exports.listUsers = async (req, res) => {
+    try {
+        const users = await User.findAll();
+        res.json(users);
+    } catch (error) {
+        console.error('Error fetching users:', error);
+        res.status(500).json({ error: 'Error fetching users' });
+    }
+};
+
+exports.upgradeUser = async (req, res) => {
+    try {
+        await User.update({ isAdmin: true }, { where: { id: req.params.id } });
+        res.json({ message: 'User Upgraded' });
+    } catch (error) { res.status(500).json({ error: 'Error Upgrading user' }); }
+};
+
+exports.downgradeUser = async (req, res) => {
+    try {
+        await User.update({ isAdmin: false }, { where: { id: req.params.id } });
+        res.json({ message: 'User Downgraded' });
+    } catch (error) { res.status(500).json({ error: 'Error Downgrading user' }); }
 };
