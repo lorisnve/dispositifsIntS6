@@ -1,20 +1,17 @@
 const express = require('express');
 const router = express.Router();
 const userController = require('../controllers/userController');
-const passport = require('passport');
+const authenticateToken = require('../../middleware/authenticateToken');
 
-router.get('/hey', userController.hey);
-router.post('/login', passport.authenticate('local', { session: false }), userController.login);
-// router.post('/login', userController.login);
-router.post('/calcul', userController.verifyToken, userController.calcul);
-router.get('/constante', userController.verifyToken, userController.constante);
-router.post('/profil', userController.verifyToken, userController.profil);
-router.delete('/delete', userController.verifyToken, userController.verifyAdmin, userController.delete);
+// public
+router.get('/test', userController.hello);
+router.post('/register', userController.createUser);
+router.post('/login', userController.login);
 
-router.post('/', userController.createUser);
-router.get('/', userController.getAllUsers);
-router.get('/:id', userController.getUserById);
-router.put('/:id', userController.updateUser);
-router.delete('/:id', userController.deleteUser);
+// private
+router.get('/profil', authenticateToken, userController.getUserProfile);
+router.delete('/rm/:id', authenticateToken, userController.deleteUser);
+router.put('/users/ban/:id', authenticateToken, userController.blockUser);
+router.post('/add-file', authenticateToken, userController.uploadFile);
 
 module.exports = router;

@@ -1,7 +1,7 @@
 const { Sequelize } = require('sequelize');
 
 const sequelize = new Sequelize(
-    'db_loris',
+    'projetexpress',
     'root',
     '',
     {
